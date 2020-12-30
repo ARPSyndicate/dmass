@@ -3,6 +3,8 @@ import re
 import json
 import optparse
 import sys
+import validators
+import tldextract
 
 BLUE='\033[94m'
 GREEN='\033[92m'
@@ -10,18 +12,20 @@ YELLOW='\033[93m'
 RED='\033[91m'
 CLEAR='\x1b[0m'
 
-print(BLUE + "dmass[1.0] by ARPSyndicate" + CLEAR)
+print(BLUE + "dmass[1.1] by ARPSyndicate" + CLEAR)
 print(GREEN + "scrapes domains from VDP/BBP scopes" + CLEAR)
 
 parser = optparse.OptionParser()
-parser.add_option('-s', '--sources', action="store", dest="sources", help="sources to scrape [disclose,arkadiyt,chaos]", default="disclose,arkadiyt,chaos")
+parser.add_option('-s', '--sources', action="store", dest="sources", help="sources to scrape [disclose,arkadiyt,chaos,crawlerninja]", default="disclose,arkadiyt,chaos,crawlerninja")
 parser.add_option('-v', '--verbose', action="store_true", dest="verbose", help="enable logging", default=False)
+parser.add_option('-r', '--root-domains-only', action="store_true", dest="root", help="scrape root domains only", default=False)
 parser.add_option('-o', '--output', action="store", dest="output", help="file for storing the output", default=False)
 
 inputs, args = parser.parse_args()
 sources = str(inputs.sources).split(",")
 verbose = inputs.verbose
 output = str(inputs.output)
+
 
 domains =[]
 
@@ -63,13 +67,29 @@ def chaos():
                 print(BLUE + "[+] [chaos] " + domain + CLEAR)
         domains.extend(meta['domains'])
 
+def crawlerninja():
+    print(YELLOW+"[*] scraping from crawlerninja"+CLEAR)
+    global domains
+    src = "https://crawler.ninja/files/security-txt-sites.txt"
+    data = requests.get(src).text
+    data = data.splitlines()
+    for meta in data[1:]:
+        domain = meta.split(" ")[1]
+        if verbose:
+            print(BLUE + "[+] [crawlerninja] " + domain + CLEAR)
+        domains.append(domain)
+
+
 def dump():
     print(YELLOW+"[*] dumping output"+CLEAR)
     global domains
+    if inputs.root:
+        nce = tldextract.TLDExtract(cache_dir=False)
+        domains = ["{}.{}".format(nce(domain).domain, nce(domain).suffix) for domain in domains if validators.domain(domain)== True]
     domains=list(set(domains))
     domains.sort()
     with open(output, 'w') as f:
-        f.writelines("%s\n" % domain for domain in domains)
+        f.writelines("%s\n" % domain for domain in domains if validators.domain(domain)== True)
 
 if "disclose" in sources:
     disclose()
@@ -77,6 +97,8 @@ if "arkadiyt" in sources:
     arkadiyt()
 if "chaos" in sources:
     chaos()
+if "crawlerninja" in sources:
+    crawlerninja()
 if inputs.output:
     dump()
 else:
