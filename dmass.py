@@ -12,11 +12,11 @@ YELLOW='\033[93m'
 RED='\033[91m'
 CLEAR='\x1b[0m'
 
-print(BLUE + "dmass[1.1] by ARPSyndicate" + CLEAR)
+print(BLUE + "dmass[1.2] by ARPSyndicate" + CLEAR)
 print(GREEN + "scrapes domains from VDP/BBP scopes" + CLEAR)
 
 parser = optparse.OptionParser()
-parser.add_option('-s', '--sources', action="store", dest="sources", help="sources to scrape [disclose,arkadiyt,chaos,crawlerninja]", default="disclose,arkadiyt,chaos,crawlerninja")
+parser.add_option('-s', '--sources', action="store", dest="sources", help="sources to scrape [disclose,arkadiyt,chaos,crawlerninja,kaas]", default="disclose,arkadiyt,chaos,crawlerninja,kaas")
 parser.add_option('-v', '--verbose', action="store_true", dest="verbose", help="enable logging", default=False)
 parser.add_option('-r', '--root-domains-only', action="store_true", dest="root", help="scrape root domains only", default=False)
 parser.add_option('-o', '--output', action="store", dest="output", help="file for storing the output", default=False)
@@ -42,8 +42,8 @@ def disclose():
 
     for meta in data:
         if verbose:
-            print(BLUE + "[+] [disclose] " + meta['program_name'] + CLEAR)
-        domains.append(meta['program_name'])
+            print(BLUE + "[+] [disclose] " + meta['security_txt_domain'] + CLEAR)
+        domains.append(meta['security_txt_domain'])
 
 def arkadiyt():
     print(YELLOW+"[*] scraping from arkadiyt"+CLEAR)
@@ -79,6 +79,17 @@ def crawlerninja():
             print(BLUE + "[+] [crawlerninja] " + domain + CLEAR)
         domains.append(domain)
 
+def kaas():
+    print(YELLOW+"[*] scraping from kaas"+CLEAR)
+    global domains
+    src = "https://raw.githubusercontent.com/ARPSyndicate/KaaS/master/huntdb_domains.txt"
+    response = requests.get(src).text
+    data = response.splitlines()
+    if verbose:
+        for domain in data:
+            print(BLUE + "[+] [kaas] " + domain + CLEAR)
+    domains.extend(data)
+
 
 def dump():
     print(YELLOW+"[*] dumping output"+CLEAR)
@@ -99,6 +110,8 @@ if "chaos" in sources:
     chaos()
 if "crawlerninja" in sources:
     crawlerninja()
+if "kaas" in sources:
+    kaas()
 if inputs.output:
     dump()
 else:
