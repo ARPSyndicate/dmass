@@ -1,4 +1,4 @@
-# Dmass | Scrapes domains from VDP/BBP Scopes
+# Dmass | Scrapes domains from VDP/BBP Scopes [DEAD]
 
 ## Screenshots
 ![dmass](dmass.png)
